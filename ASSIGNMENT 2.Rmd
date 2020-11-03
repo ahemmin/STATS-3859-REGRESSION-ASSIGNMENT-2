@@ -1,0 +1,340 @@
+---
+title: "STATS 3859 ASSIGNMENT 2"
+author: "Alexander Hemming"
+date: "10/23/2020"
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+---
+
+Question 1
+
+a)
+
+```{r}
+set.seed(100)
+sub_index = sample(nrow(mtcars), 20, replace = FALSE)
+mtcars2 = mtcars[sub_index, c(1, 2, 4)]
+pairs(~., data = mtcars2)
+```
+
+mpg and hp
+
+The relationship appears to be related by a weak-moderate negative linear relationship
+
+mpg and cyl
+
+Due to cyls being a categorical variable you can clearly see that there are three clusters that could be connected by a negative linear regression line (ie as the # of cylinders increases the mpg decreases) however I would never say that the relation is strictly linear as most of the points do not lie along a linear regression line if one was to be created (Not completely non-linear but not linear enough for me to classify it as such)
+
+cyl and hp
+
+Similar to mpg and cyl in that you could feasibly say that there is some sort of positive linear relationship (ie it appears that cars with more cylinders tend to have more hp),the relationship is very weak and most if not all points would not lie along the regression line and thus while I would not say that these variables are independent they are certaintly not strongly linearly related so more so than mpg and hp I would be inclined to say that these variables are non-linearly related or at least the relation is less obviously linear making it difficult to assess for sure
+
+b)
+
+```{r}
+fitted_model = lm(mpg ~., data = mtcars2)
+summary(fitted_model)
+sum(residuals(fitted_model))
+```
+
+The linear regression model is:
+
+Y_hat = 34.90165 - 2.20816*Xi1 - 0.01082*Xi2 + ei
+
+The percentage of the fuel consumption explained by the model is the coefficient of determination R^2 which has a value of 0.7772 meaning that approximately 77.7% of the variation observed in Y can be explained by the regression model (0.751 if you choose to use the Adjusted R^2)
+
+c)
+
+```{r}
+confint(fitted_model, level = 0.90)
+```
+
+Therefore the CI for beta_cyl is (-3.211, -1.205)
+
+d)
+
+```{r}
+predict(fitted_model, newdata = data.frame(cyl=4,hp=90))
+
+predict(fitted_model, newdata = data.frame(cyl=6,hp=150))
+
+predict(fitted_model, newdata = data.frame(cyl=8,hp=210))
+```
+
+A: 
+
+The model would predict that for a car with 4 cylinders and a horsepower of 90, the miles per gallon would be approximately 25.10
+
+B: 
+
+The model would predict that for a car with 6 cylinders and a horsepower of 150, the miles per gallon would be approximately 20.03
+
+C: 
+
+The model would predict that for a car with 8 cylinders and a horsepower of 210, the miles per gallon would be approximately 14.96
+
+e)
+
+```{r}
+predict(fitted_model, data.frame(cyl=8,hp=210), interval = 'prediction', level = 0.999835)
+```
+
+In order to accommodate for a mpg of 3 for a car with specs detailed in C, you would have to have a CI of approximately 99.9835% which essentially means that while it is indeed possible to have a car of these specs with a mpg of 3 but it is extremely unlikely considering our data set where the vast majority of our data lies above this value.  A value of 3 for mpg is right out at the low extreme of our distribution of data and therefore is extremely unlikely to be the case for a car with C's specs
+
+f)
+
+```{r}
+fitted_model = lm(mpg ~., data = mtcars2)
+null_model = lm(mpg~1, data = mtcars2)
+anova(null_model, fitted_model)
+x = data.frame(Sources = c("Regression","Error","Total"), Sum_of_Squares = c(336.28,96.42,432.70), df = c(2, 17, 19), Mean_Square = c(336.28/2,96.42/17,NA), F_Statistic = c(29.645,NA,NA))
+x
+```
+g)
+
+```{r}
+f_critical_value = qf(0.95, df1 = 2, df2 = 17)
+f_critical_value
+x$F_Statistic[1] > f_critical_value
+```
+
+Since the F statistic is indeed larger than the F critical value for alpha = 0.05 and the P-value is smaller than 0.05, we can reject H0 and therefore the statement made that neither of the two predictors have significant linear relationship with the response is not true.  By rejecting H0 we confirm that statistically speaking there is at least one predictor variable that has a significant linear relationship with the response variable Y.
+
+h)
+
+```{r}
+fitted_model = lm(mpg ~., data = mtcars2)
+summary(fitted_model)
+```
+
+The P value is much greater than alpha = 0.05 and therefore H0 cannot be rejected meaning that the hp predictor variable is not significantly different from 0 and therefore is not significant in explaining the variation observed in Y
+
+i)
+
+```{r}
+fitted_model2 = lm(mpg ~ hp, data = mtcars2)
+summary(fitted_model2)
+```
+
+The P value is much smaller than alpha = 0.05 and therefore H0 can be rejected meaning that the hp predictor variable is indeed significantly different from 0 and therefore significant in explaining the variation observed in Y
+
+j)
+
+No the results were not consistent between the two fitted models.  This was likely due to the interaction effect between predictors as we have talked about in lecture where the influence of the predictors on Y are not completely independent of one another and thus when you eliminate predictors they affect the effect that other predictors have on Y.  Typically you can take into account for this by adding more predictors that are cross terms of other predictors (k-way interactions)
+
+k)
+
+```{r}
+set.seed(2)
+sub_index = sample(nrow(mtcars), 27, replace=FALSE)
+mtcars3 = mtcars [sub_index , c(1:4, 10)]
+full_model = lm(mpg~., data = mtcars3)
+summary(full_model)
+```
+No again due to interaction effects between our predictor variables we cannot assume that the effect of all these predictors are in fact negligible to the behaviour of Y.  It is quite likely that if we were to remove just one of these predictors that the influence of the others and consequently their P-values would change and potentially decrease them to a point were they are significantly different from 0 and thus have a significant effect
+
+l)
+
+```{r}
+full_model = lm(mpg~., data = mtcars3)
+summary(full_model)
+reduced_model = lm(mpg~1, data = mtcars3)
+anova(reduced_model, full_model)
+x = data.frame(Sources = c("Regression","Error","Total"), Sum_of_Squares = c(634.96,153.14,788.09), df = c(4, 22, 26), Mean_Square = c(634.96/4,153.14/22,NA), F_Statistic = c(22.805,NA,NA))
+x
+f_critical_value = qf(0.90, df1 = 4, df2 = 22)
+f_critical_value
+x$F_Statistic[1] > f_critical_value
+
+```
+
+Since the F statistic is indeed larger than the F critical value for alpha = 0.1 and the P-value is smaller than 0.1, we can reject H0 and therefore there is at least one predictor variable that has a significant linear relationship with the response variable Y
+
+Question 2
+
+a)
+
+```{r}
+set.seed(50)
+idx = sample(32, 25, replace = FALSE)
+mtcars2 = mtcars[idx,]
+mtcars2$cyl = as.factor(mtcars2$cyl)
+
+fitted_model = lm(mpg ~ wt + cyl, data = mtcars2)
+summary(fitted_model)
+intercept_6 = coef(fitted_model)[1] + coef(fitted_model)[3]
+slope = coef(fitted_model)[2]
+prediction = slope*3 + intercept_6
+prediction
+```
+Therefore the predicted mpg for a car with weight = 3 and number of cylinders = 6 is 19.84
+
+b)
+
+```{r}
+fitted_model = lm(mpg~ wt + cyl, data = mtcars2)
+summary(fitted_model)
+```
+
+Since our P-value is smaller than our alpha = 0.05 we can reject H0 and therefore can conclude that indeed the cyl predictor variable is significant in explaining the observed behaviour in our response Y
+
+c)
+
+```{r}
+
+set.seed(50)
+idx = sample(32, 25, replace = FALSE)
+mtcars2 = mtcars[idx,]
+mtcars2$cyl = as.factor(mtcars2$cyl)
+
+coef(fitted_model)
+fitted_model = lm(mpg ~ wt + cyl + wt*cyl, data = mtcars2)
+summary(fitted_model)
+intercept_8 = coef(fitted_model)[1] + coef(fitted_model)[4]
+slope_8 = coef(fitted_model)[2] + coef(fitted_model)[6]
+prediction = slope*3 + intercept_8
+prediction
+```
+
+d)
+
+```{r}
+full_model = lm(mpg ~ wt + cyl + wt*cyl, data = mtcars2)
+reduced_model = lm(mpg ~ wt + cyl, data = mtcars2)
+anova(reduced_model, full_model)
+x = data.frame(Sources = c("Regression","Error","Total"), Sum_of_Squares = c(28.698,132.26,160.96), df = c(2, 19, 21), Mean_Square = c(28.698/2,132.26/19,NA), F_Statistic = c(2.0613,NA,NA))
+x
+```
+
+Since the P-value is larger than 0.05 we cannot reject H0 and therefore we can indeed conclude that the interaction effects between the predictor variables is not significant for our model
+
+Question 3
+
+a)
+
+After a bit of rearrangement and grouping on paper you get
+
+```{r}
+x = read.csv("http://raw.githubusercontent.com/hgweon2/ss3859/master/hw2-data-1.csv")
+fitted_model = lm(y~ x1 + x2 + x3 + x1*x2 + x1*x3 + x2*x3 + x1*x2*x3, data = x)
+summary(fitted_model)
+
+A = coef(fitted_model)[2] + (50 * coef(fitted_model)[5]) + (7 * coef(fitted_model)[6]) + (350 * coef(fitted_model)[8]) 
+A
+```
+
+For every increase of 1 of x1, you have an increase A of approximately 4 in the response variable
+
+b)
+
+```{r}
+plot(fitted_model$residuals ~ fitted_model$fitted.values, data = x,
+     xlab = "Fitted Values (Y_hat)", ylab = "Residuals (e)", main = "Residual Plot", pch = 16, col = "dodgerblue")
+abline(a = 0, b = 0)
+
+qqnorm(residuals(fitted_model), pch = 16, col = "dodgerblue")
+qqline(residuals(fitted_model))
+```
+
+From the residual plot we can see that there are no obvious patterns (spread non-systematically), the spread of the points appear to be centered around 0 and doesn't appear to be increasing or decreasing in the spread of the data as we may expect from time series data confirming both our linearity and equal variance assumptions.  From the normal QQ plot we can see that is it not entirely clear that the normality assumption is valid everywhere.  The model appears to hold with the assumption of normality in the middle but at the end points we see small deviations where our model grows more slowly at the beginning and the end (longer areas at the extremes like a flattened normal distribution).
+
+c)
+
+```{r}
+library(lmtest)
+bptest(fitted_model, )
+
+shapiro.test(residuals(fitted_model))
+```
+
+In both both tests P-value is more than our level of significance 0.05 meaning that we cannot reject our H0 in either case and thus the Breusch-Pagan test confirms that we have equal variance and the Shapiro-Wilks test confirms that our normality assumption is valid.
+
+d)
+
+```{r}
+x = read.csv("http://raw.githubusercontent.com/hgweon2/ss3859/master/hw2-data-1.csv")
+fitted_model = lm(y ~ x1 + x2 + x3 + x1*x2 + x1*x3 + x2*x3 + x1*x2*x3, data = x)
+reduced_model = lm(y ~ x1 + x2 + x3 + x1*x2 + x1*x3 + x2*x3, data = x)
+anova(reduced_model, fitted_model)
+x = data.frame(Sources = c("Regression","Error","Total"), Sum_of_Squares = c(6.737,1023.6,1030.3), df = c(1, 92, 93), Mean_Square = c(6.737/1,1023.6/92,NA), F_Statistic = c(0.6055,NA,NA))
+x
+```
+
+Since the F statistic is low (principally < 1) and the P-value is very large we can determine that no in fact we do not need the 3-way interaction term as it does not significantly benefit our model (it does not have great enough influence on the model at large to change it in a meaningful way)
+
+e)
+
+```{r}
+x = read.csv("http://raw.githubusercontent.com/hgweon2/ss3859/master/hw2-data-1.csv")
+fitted_model = lm(y ~ x1 + x2 + x3 + x1*x2 + x1*x3 + x2*x3 + x1*x2*x3, data = x)
+reduced_model = lm(y ~ x1 + x2 + x3, data = x)
+anova(reduced_model, fitted_model)
+x = data.frame(Sources = c("Regression","Error","Total"), Sum_of_Squares = c(217.16,1023.6,1240.8), df = c(4, 92, 96), Mean_Square = c(217.16/4,1023.6/92,NA), F_Statistic = c(4.8795,NA,NA))
+x
+```
+
+Since the F statistic is large and the P-value is very small below our 0.05 level of significance, we can reject H0 and conclude that there are in fact significant interaction effects present between our predictor variables that significantly impacts the performance of our model
+
+Question 4
+
+```{r}
+x = read.csv("http://raw.githubusercontent.com/hgweon2/ss3859/master/hw2-data-2.csv")
+fitted_model = lm(y ~ x, data = x)
+summary(fitted_model)
+```
+
+So our fitted model is:
+Y_hat = 2.01828 + 2.02023*x
+
+```{r}
+plot(fitted_model$residuals ~ fitted_model$fitted.values, data = x,
+     xlab = "Fitted Values (Y_hat)", ylab = "Residuals (e)", main = "Residual Plot", pch = 16, col = "dodgerblue")
+abline(a = 0, b = 0)
+
+qqnorm(residuals(fitted_model), pch = 16, col = "dodgerblue")
+qqline(residuals(fitted_model))
+```
+
+It is pretty apparent from the residuals plot that both the equal variances and linearity assumptions (especially the linearity assumption) are massively in question for this data set due to the obvious pattern formed by the data (systematic spread).  The normal QQ plot while marginally better in appearance has many of the same problems.  There is clearly a pattern in the data contrary to our standard normal distribution and thus I would also strongly question our assumption of normality for this data set.  At the very least the data is not clearly following a normal distribution in a manner that would confirm our normality assumption beyond a reasonable doubt
+
+```{r}
+library(lmtest)
+bptest(fitted_model, )
+
+shapiro.test(residuals(fitted_model))
+```
+
+Since the P-value for the Breusch-Pagan Test is greater than our significance level of 0.05 we cannot reject H0 that would suggest that our assumption of equal variance is indeed valid as we saw in our residual plot however this does not/cannot take into account the systematic spread of the data (the pattern like nature).  This was also the case for the Shapiro Test (P-value > 0.05), which would indicate that indeed our assumption of normality is valid as we could somewhat guess from our normal QQ plot.
+
+Question 5
+
+```{r}
+x = read.csv("http://raw.githubusercontent.com/hgweon2/ss3859/master/hw2-data-3.csv")
+fitted_model = lm(y ~ x, data = x)
+summary(fitted_model)
+```
+
+So our fitted model is:
+Y_hat = -4.5459 + 3.8815*x
+
+```{r}
+plot(fitted_model$residuals ~ fitted_model$fitted.values, data = x,
+     xlab = "Fitted Values (Y_hat)", ylab = "Residuals (e)", main = "Residual Plot", pch = 16, col = "dodgerblue")
+abline(a = 0, b = 0)
+
+qqnorm(residuals(fitted_model), pch = 16, col = "dodgerblue")
+qqline(residuals(fitted_model))
+```
+
+It is pretty apparent from the residuals plot that both the equal variances and linearity assumptions (especially the equal variance assumption) is massively in question (pretty obviously invalid) for this data set due to the obvious cone shape of the data where the spread of the data is increasing.  The normal QQ plot is also not favourable.  There is clearly a pattern at the ends of the plot contrary to our normal distribution, in fact worse than the previous example as this plot approaches having heavy tails opposed to the light tails of the previous example.  From this plot I would personally consider this as sufficient evidence that the assumption of normality should not be assumed for this data set
+
+```{r}
+library(lmtest)
+bptest(fitted_model, )
+
+shapiro.test(residuals(fitted_model))
+```
+
+Since the P-value for the Breusch-Pagan Test is less than our significance level of 0.05, we can reject H0 that would suggest that our assumption of equal variance is not valid as we saw in our plot.  This was also the case for the Shapiro Test (P-value < 0.05), which would indicate that our assumption of normality is also not valid again supporting what we see visually from the normal QQ plot
